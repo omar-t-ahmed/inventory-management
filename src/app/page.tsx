@@ -1,5 +1,6 @@
 'use client';
-import { Box, Button, Modal, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, IconButton, Modal, Stack, TextField, Typography, AppBar, Toolbar, Slide, useScrollTrigger, InputBase, createTheme, ThemeProvider } from "@mui/material";
+import { Add, Remove, Delete, Search } from '@mui/icons-material';
 import { firestore } from "../../firebase";
 import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc } from "firebase/firestore";
 import { useState, useEffect } from "react";
@@ -9,10 +10,56 @@ interface InventoryItem {
   quantity?: number; // Add other properties if needed
 }
 
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#865D36',
+    },
+    secondary: {
+      main: '#3E362E',
+    },
+    background: {
+      default: '#AC8968',
+      paper: '#93785B',
+    },
+    text: {
+      primary: '#3E362E',
+      secondary: '#A69080',
+    },
+  },
+  typography: {
+    fontFamily: 'Arial, sans-serif',
+    h3: {
+      fontWeight: 600,
+      color: '#3E362E',
+    },
+    h6: {
+      fontWeight: 500,
+      color: '#3E362E',
+    },
+    body1: {
+      color: '#3E362E',
+    },
+  },
+});
+
+function HideOnScroll(props: { children: React.ReactElement }) {
+  const { children } = props;
+  const trigger = useScrollTrigger();
+
+  return (
+    <Slide appear={false} direction="down" in={!trigger}>
+      {children}
+    </Slide>
+  );
+}
+
 export default function Home() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [open, setOpen] = useState<Boolean>(false);
+  const [open, setOpen] = useState<boolean>(false);
   const [itemName, setItemName] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchOpen, setSearchOpen] = useState<boolean>(false);
 
   const handleOpen = () => { setOpen(true); };
   const handleClose = () => { setOpen(false); };
@@ -47,6 +94,12 @@ export default function Home() {
     await updateInventory();
   };
 
+  const deleteItem = async (item: string) => {
+    const docRef = doc(firestore, 'inventory', item);
+    await deleteDoc(docRef);
+    await updateInventory();
+  };
+
   const addItem = async (item: string) => {
     const docRef = doc(firestore, 'inventory', item);
     const docSnap = await getDoc(docRef);
@@ -65,55 +118,105 @@ export default function Home() {
     updateInventory();
   }, []);
 
+  const filteredInventory = inventory.filter(item => 
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <Box width="100vw" height="100vh" display="flex" justifyContent="center" alignItems="center" flexDirection="column">
-      <Modal open={open} onClose={handleClose}>
-        <Box position={'absolute'} top={'50%'} left={'50%'} width={400} bgcolor={'white'} border={'2px solid #0000'} boxShadow={34} p={4} display={'flex'} flexDirection={'column'} gap={3} sx={{ transform: 'translate(-50%,-50%)' }}>
-          <Typography variant="h6" color="#333" textAlign="center">
-            Add Item
+    <ThemeProvider theme={theme}>
+      <HideOnScroll>
+        <AppBar position="sticky" color="primary" elevation={0}>
+          <Toolbar>
+            <Typography variant="h6" component="div" color={'white'} sx={{ flexGrow: 1 }}>
+              StockMate
+            </Typography>
+            <IconButton color="inherit" onClick={() => setSearchOpen(!searchOpen)}>
+              <Search />
+            </IconButton>
+            {searchOpen && (
+              <Box component="form" sx={{ ml: 2, display: 'flex', alignItems: 'center' }}>
+                <InputBase
+                  placeholder="Search…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  sx={{ color: 'inherit', background: '#fff', borderRadius: 1, paddingLeft: 1, paddingRight: 1, transition: 'width 0.4s', width: searchOpen ? '200px' : '0px' }}
+                />
+              </Box>
+            )}
+          </Toolbar>
+        </AppBar>
+      </HideOnScroll>
+      <Box width="100vw" height="100vh" display="flex" justifyContent="center" alignItems="center" flexDirection="column" bgcolor="background.default" p={2}>
+        <Box 
+          width="500px" 
+          p={2} 
+          mb={2} 
+          bgcolor="rgba(144, 102, 61, 0.5)" 
+          borderRadius="8px" 
+          boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)"
+        >
+          <Typography variant="h6" color="textPrimary" textAlign="center">
+            Inventory
           </Typography>
-          <Stack width='100%' direction={'row'} spacing={2}>
-            <TextField
-              variant='outlined'
-              fullWidth
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-            />
-            <Button variant='outlined' onClick={() => {
-              addItem(itemName);
-              setItemName('');
-              handleClose();
-            }}>Add</Button>
-          </Stack>
         </Box>
-      </Modal>
-      <Typography variant="h3" color="#333" textAlign="center" paddingBottom={'20px'}>
-        Inventory Management
-      </Typography>
-      <Stack width="500px" height="400px" spacing={2} overflow="auto" marginBottom={'20px'} >
-        {inventory.map((item, i) => (
-          <Box
-            key={i}
-            width="100%"
-            height="50px"
-            display="flex"
-            justifyContent='space-between'
-            alignItems="center"
-            bgcolor="#d3d3d3"
-            borderRadius="4px"
-            boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)"
-            p={1}
-          >
-            {item.name.charAt(0).toUpperCase() + item.name.slice(1)} - {item.quantity}
-            <Button onClick={() => removeItem(item.name)}>Remove</Button>
+        <Modal open={open} onClose={handleClose}>
+          <Box position={'absolute'} top={'50%'} left={'50%'} width={400} bgcolor={'white'} borderRadius={2} boxShadow={24} p={4} display={'flex'} flexDirection={'column'} gap={3} sx={{ transform: 'translate(-50%,-50%)' }}>
+            <Typography variant="h6" color="textPrimary" textAlign="center">
+              Add Item
+            </Typography>
+            <Stack width='100%' direction={'row'} spacing={2}>
+              <TextField
+                variant='outlined'
+                fullWidth
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+                placeholder="Item Name"
+              />
+              <Button variant='contained' color="primary" onClick={() => {
+                addItem(itemName);
+                setItemName('');
+                handleClose();
+              }}>Add</Button>
+            </Stack>
           </Box>
-        ))}
-      </Stack>
-      <Button
-        variant='contained'
-        onClick={handleOpen}>
-        Add New Item
-      </Button>
-    </Box>
+        </Modal>
+        <Stack width="500px" height="400px" spacing={2} overflow="auto" marginBottom={'20px'}>
+          {filteredInventory.map((item, i) => (
+            <Box
+              key={i}
+              width="100%"
+              height="50px"
+              display="flex"
+              justifyContent='space-between'
+              alignItems="center"
+              bgcolor="background.paper"
+              borderRadius="4px"
+              boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)"
+              p={1}
+              sx={{ transition: 'all 0.3s', '&:hover': { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)' } }}
+            >
+              <Typography variant="body1" color="textPrimary">{item.name.charAt(0).toUpperCase() + item.name.slice(1)} - {item.quantity}</Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <IconButton onClick={() => removeItem(item.name)} size="small" color="primary">
+                  <Remove />
+                </IconButton>
+                <IconButton onClick={() => addItem(item.name)} size="small" color="primary">
+                  <Add />
+                </IconButton>
+                <IconButton onClick={() => deleteItem(item.name)} size="small" color="secondary">
+                  <Delete />
+                </IconButton>
+              </Box>
+            </Box>
+          ))}
+        </Stack>
+        <Button
+          variant='contained'
+          color="primary"
+          onClick={handleOpen}>
+          Add New Item
+        </Button>
+      </Box>
+    </ThemeProvider>
   );
 }
