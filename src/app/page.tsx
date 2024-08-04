@@ -19,7 +19,7 @@ const theme = createTheme({
       main: '#3E362E',
     },
     background: {
-      default: '#AC8968',
+      default: '#FFEBCD',
       paper: '#93785B',
     },
     text: {
@@ -126,24 +126,29 @@ export default function Home() {
     <ThemeProvider theme={theme}>
       <HideOnScroll>
         <AppBar position="sticky" color="primary" elevation={0}>
-          <Toolbar>
-            <Typography variant="h6" component="div" color={'white'} sx={{ flexGrow: 1 }}>
-              StockMate
-            </Typography>
-            <IconButton color="inherit" onClick={() => setSearchOpen(!searchOpen)}>
-              <Search />
-            </IconButton>
-            {searchOpen && (
-              <Box component="form" sx={{ ml: 2, display: 'flex', alignItems: 'center' }}>
-                <InputBase
-                  placeholder="Search…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{ color: 'inherit', background: '#fff', borderRadius: 1, paddingLeft: 1, paddingRight: 1, transition: 'width 0.4s', width: searchOpen ? '200px' : '0px' }}
-                />
-              </Box>
-            )}
-          </Toolbar>
+        <Toolbar>
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1, display: 'flex' }}>
+          <Box component="span" color="white">
+            Stock
+          </Box>
+          <Box component="span" color="black">
+            Mate
+          </Box>
+        </Typography>
+        <IconButton color="inherit" onClick={() => setSearchOpen(!searchOpen)}>
+          <Search />
+        </IconButton>
+        {searchOpen && (
+          <Box component="form" sx={{ ml: 2, display: 'flex', alignItems: 'center' }}>
+            <InputBase
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ color: 'black', background: '#fff', borderRadius: 1, paddingLeft: 1, paddingRight: 1, transition: 'width 0.4s', width: searchOpen ? '200px' : '0px' }}
+            />
+          </Box>
+        )}
+      </Toolbar>
         </AppBar>
       </HideOnScroll>
       <Box width="100vw" height="100vh" display="flex" justifyContent="center" alignItems="center" flexDirection="column" bgcolor="background.default" p={2}>
@@ -151,9 +156,10 @@ export default function Home() {
           width="500px" 
           p={2} 
           mb={2} 
-          bgcolor="rgba(144, 102, 61, 0.5)" 
+          bgcolor="rgba(255, 255, 255, 0.5)" 
           borderRadius="8px" 
           boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)"
+          sx={{ backdropFilter: 'blur(10px)' }}
         >
           <Typography variant="h6" color="textPrimary" textAlign="center">
             Inventory
@@ -195,7 +201,7 @@ export default function Home() {
               p={1}
               sx={{ transition: 'all 0.3s', '&:hover': { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)' } }}
             >
-              <Typography variant="body1" color="textPrimary">{item.name.charAt(0).toUpperCase() + item.name.slice(1)} - {item.quantity}</Typography>
+              <Typography variant="body1" color="textPrimary">{item.name.charAt(0).toUpperCase() + item.name.slice(1)} : {item.quantity}</Typography>
               <Box display="flex" alignItems="center" gap={2}>
                 <IconButton onClick={() => removeItem(item.name)} size="small" color="primary">
                   <Remove />
